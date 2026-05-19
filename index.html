@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<!-- > para correr el proyecto npx serve -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain GANADO - Trazabilidad Bovina</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Crypto JS CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="role-selector-container">
+            <label for="role-select">ROL ACTIVO</label>
+            <select id="role-select" onchange="cambiarRol(this.value)">
+                <option value="1">Rol 1: Originador</option>
+                <option value="2">Rol 2: Agregador</option>
+                <option value="3">Rol 3: Verificador</option>
+            </select>
+        </div>
+
+        <nav class="tabs">
+            <button id="nav-registro" class="tab-btn active" onclick="cambiarPestana('registro')">Registrar Vaca</button>
+            <button id="nav-inventario" class="tab-btn" onclick="cambiarPestana('inventario')">Inventario</button>
+            <button id="nav-trazabilidad" class="tab-btn" onclick="cambiarPestana('trazabilidad')">Trazabilidad</button>
+        </nav>
+
+        <header>
+            <div id="integrity-badge" class="integrity-badge">Verificando integridad...</div>
+            <div class="logo-area">
+                <span class="blockchain-icon">⛓️</span>
+                <h1>Blockchain Bovina</h1>
+            </div>
+            <p class="subtitle">Trazabilidad Inmutable • Seguridad Sanitaria • Integridad de Datos</p>
+        </header>
+
+        <!-- Vista 1: Registro -->
+        <div id="registro" class="tab-content active">
+            <div class="card">
+                <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Nueva Identificación</h2>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="Crotal">Crotal (Identificador)</label>
+                        <input type="text" id="Crotal" name="Crotal" placeholder="ej: VAC-102" required>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                            <div>
+                                <label for="Peso">Peso Actual (kg)</label>
+                                <input type="number" id="Peso" name="Peso" placeholder="ej: 450" required>
+                            </div>
+                            <div>
+                                <label for="Sexo">Sexo</label>
+                                <select id="Sexo" name="Sexo" required>
+                                    <option value="macho">Macho</option>
+                                    <option value="hembra">Hembra</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <label for="FechaNacimiento" style="margin-top: 1rem;">Fecha de Nacimiento</label>
+                        <input type="date" id="FechaNacimiento" name="FechaNacimiento" required>
+
+                        <label for="Raza" style="margin-top: 1rem;">Raza</label>
+                        <select name="Raza" id="Raza" required>
+                            <option value="">Seleccione la raza...</option>
+                            <optgroup label="Razas Lecheras">
+                                <option value="Holstein">Holstein</option>
+                                <option value="Jersey">Jersey</option>
+                                <option value="Pardo Suizo">Pardo Suizo</option>
+                            </optgroup>
+                            <optgroup label="Razas Cárnicas">
+                                <option value="Angus">Angus</option>
+                                <option value="Hereford">Hereford</option>
+                                <option value="Brahman">Brahman</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <button type="submit" id="submit-btn" class="primary-btn">Registrar en Blockchain</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Vista 2: Inventario -->
+        <div id="inventario" class="tab-content">
+            <section class="card">
+                <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Hato Ganadero (Vacunación)</h2>
+                <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.85rem;">Seleccione una vaca para
+                    registrar una nueva operación sanitaria.</p>
+                <div id="inventory-list" class="inventory-grid">
+                    <!-- Dinámico -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Vista 3: Trazabilidad -->
+        <div id="trazabilidad" class="tab-content">
+            <section>
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+                    <div>
+                        <h2 style="font-size: 1.25rem;">Consulta de Trazabilidad Única</h2>
+                        <p style="color: var(--text-muted); font-size: 0.8rem;">Ingrese el identificador para ver el
+                            histórico inmutable.</p>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="crotal-search" placeholder="🔍 Buscar Crotal (ej: VAC-102)"
+                            oninput="manejarBusqueda(event)">
+                    </div>
+                </div>
+                <div id="blockchain-viz" class="blockchain-viz">
+                    <!-- Dinámico -->
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Modal Vacunación -->
+    <div id="vaccine-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px">
+            <span class="close" onclick="cerrarModalVacunas()">&times;</span>
+            <h2 style="margin-bottom:0.5rem">Aplicar Vacuna</h2>
+            <p id="cow-summary" style="font-size: 0.85rem; color: var(--primary); margin-bottom: 1.5rem;"></p>
+
+            <input type="hidden" id="target-crotal">
+            <div class="form-group" style="text-align: left">
+                <label>Seleccionar Vacuna Válida</label>
+                <select id="vaccine-select" required></select>
+
+                <label style="margin-top: 1rem;">Nombre del Aplicador</label>
+                <select id="applicator-name" required></select>
+            </div>
+
+            <button onclick="procesarVacunacion()" class="primary-btn">Grabar Vacunación en Blockchain</button>
+        </div>
+    </div>
+
+    <!-- Modal para QR y JSON -->
+    <div id="qr-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2 style="margin-bottom:1rem">Visor de Blockchain</h2>
+            <div id="qr-code"></div>
+            <p style="margin-top:1rem; font-size:0.8rem; color:var(--text-muted)">Validación de integridad</p>
+        </div>
+    </div>
+
+    <!-- Scripts Modularizados -->
+    <script src="js/blockchain.js"></script>
+    <script src="js/roles.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
